@@ -1,6 +1,6 @@
 ---
-name: deep-investigator
-description: 深度调查模式：可以深入调查和分析确定目标的详细信息，并提供完整综合报告
+name: data-dig
+description: 数据要素深度调查模式：对数据要素、高质量数据集、数据交易等特定主题进行多维度深入调查分析，并提供完整综合报告
 ---
 
 # 深度调查 Skill
