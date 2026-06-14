@@ -1,54 +1,124 @@
 #!/usr/bin/env python3
 import xml.etree.ElementTree as ET
 import sys
-from datetime import datetime, timedelta
+import re
+from datetime import datetime, timedelta, timezone
+import html
 
-# RSS 文件路径
-rss_file = "/Users/quartet/.claude/projects/-Users-quartet-data-elements/67b4faad-74f6-4d16-9276-4f7469a06888/tool-results/bv6pexhvs.txt"
+def parse_rss_file(file_path, cutoff_str, window_days):
+    """Parse RSS feed file and filter by time"""
+    # Parse cutoff time
+    try:
+        cutoff = datetime.fromisoformat(cutoff_str.replace('+08:00', '').replace('Z', ''))
+        if cutoff.tzinfo is None:
+            cutoff = cutoff.replace(tzinfo=timezone(timedelta(hours=8)))
+        start_time = cutoff - timedelta(days=window_days)
+    except:
+        cutoff = datetime.now(timezone(timedelta(hours=8)))
+        start_time = cutoff - timedelta(days=window_days)
 
-# 时间范围：过去7天
-cutoff_date = datetime.now() - timedelta(days=7)
+    # Read file
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
 
-# 解析 RSS
-tree = ET.parse(rss_file)
-root = tree.getroot()
+    # Parse XML
+    root = ET.fromstring(content)
 
-# 命名空间
-ns = {'rss': 'http://purl.org/rss/1.0/'}
+    # Find channel/items
+    channel = root.find('.//channel')
+    if channel is None:
+        return None
 
-# 查找所有 item
-items = root.findall('.//item')
+    items = channel.findall('.//item')
+    parsed_items = []
 
-print(f"总共找到 {len(items)} 篇文章\n")
-print("=" * 80)
+    for item in items:
+        try:
+            title_elem = item.find('title')
+            link_elem = item.find('link')
+            pubDate_elem = item.find('pubDate')
+            desc_elem = item.find('description')
 
-count = 0
-for item in items:
-    title = item.find('title')
-    link = item.find('link')
-    pub_date = item.find('pubDate')
+            if title_elem is None or link_elem is None:
+                continue
 
-    if title is not None and link is not None:
-        title_text = title.text.strip() if title.text else ""
-        link_text = link.text.strip() if link.text else ""
+            title = title_elem.text or ''
+            link = link_elem.text or ''
+            pubDate_str = pubDate_elem.text if pubDate_elem is not None else None
+            description = desc_elem.text if desc_elem is not None else ''
 
-        # 解析时间
-        if pub_date is not None and pub_date.text:
-            try:
-                # 解析 RFC 2822 时间格式
-                date_obj = datetime.strptime(pub_date.text.strip(), "%a, %d %b %Y %H:%M:%S %z")
-                # 转换为无时区时间以便比较
-                date_obj = date_obj.replace(tzinfo=None)
+            # Clean title
+            title = title.strip()
+            title = re.sub(r'[​-‍﻿]', '', title)
+            if not title or not link:
+                continue
 
-                # 检查是否在7天内
-                if date_obj >= cutoff_date:
-                    count += 1
-                    print(f"\n[{count}] {title_text}")
-                    print(f"URL: {link_text}")
-                    print(f"发布时间: {pub_date.text.strip()}")
-                    print(f"本地时间: {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
-                    print("-" * 80)
-            except Exception as e:
-                pass
+            # Clean link
+            link = link.strip()
 
-print(f"\n\n过去7天内共有 {count} 篇文章")
+            # Parse pubDate
+            pubDate = None
+            if pubDate_str:
+                try:
+                    # Try RFC 2822 format
+                    pubDate = datetime.strptime(pubDate_str, '%a, %d %b %Y %H:%M:%S %z')
+                    pubDate = pubDate.strftime('%Y-%m-%d')
+                except:
+                    try:
+                        pubDate = datetime.strptime(pubDate_str, '%a, %d %b %Y %H:%M:%S GMT')
+                        pubDate = pubDate.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d')
+                    except:
+                        pubDate = None
+
+            if pubDate is None:
+                continue
+
+            # Clean description (remove HTML tags)
+            description = re.sub(r'<[^>]+>', '', description)
+            description = html.unescape(description)
+            description = description.strip()
+            if len(description) > 500:
+                description = description[:500]
+
+            parsed_items.append({
+                'title': title,
+                'link': link,
+                'pubDate': pubDate,
+                'description': description
+            })
+
+        except Exception as e:
+            continue
+
+    # Time filter
+    filtered_items = []
+    cutoff_str_only = cutoff.strftime('%Y-%m-%d')
+    start_str_only = start_time.strftime('%Y-%m-%d')
+
+    for item in parsed_items:
+        if item['pubDate']:
+            if start_str_only <= item['pubDate'] <= cutoff_str_only:
+                filtered_items.append(item)
+
+    # Limit to 20 items
+    filtered_items = filtered_items[:20]
+
+    return {
+        'total': len(parsed_items),
+        'after_time_filter': len(filtered_items),
+        'items': filtered_items
+    }
+
+if __name__ == '__main__':
+    if len(sys.argv) < 4:
+        print("Usage: parse_rss.py <xml_file> <cutoff_iso> <window_days>", file=sys.stderr)
+        sys.exit(1)
+
+    file_path = sys.argv[1]
+    cutoff = sys.argv[2]
+    window = int(sys.argv[3])
+
+    result = parse_rss_file(file_path, cutoff, window)
+    if result:
+        import json
+        print(json.dumps(result, ensure_ascii=False, indent=2))
