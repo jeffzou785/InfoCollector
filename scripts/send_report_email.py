@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""数据要素洞察报告邮件发送脚本"""
+"""数据要素洞察报告邮件发送脚本
+
+发送形态：HTML 正文（markdown 纯文本 + 渲染 HTML 作为 alternative 正文）
+同时把渲染后的 HTML 持久化到 md 文件同目录（同名 .html）。
+"""
 
 import smtplib
 import sys
@@ -14,7 +18,7 @@ SMTP_PORT = 587
 SENDER = "441919123@qq.com"
 AUTH_CODE = "uamyfvpbdjfxcadc"
 RECIPIENTS = ["zoujunfeng1@huawei.com", "linana19@h-partners.com"]
-SUBJECT = "数据要素洞察报告"
+SUBJECT = "数据要素每日洞察"
 
 
 def markdown_to_html(md_text: str) -> str:
@@ -55,15 +59,23 @@ def send_email(report_path: str):
     with open(report_path, "r", encoding="utf-8") as f:
         md_content = f.read()
 
+    html_content = markdown_to_html(md_content)
+
+    # 持久化 HTML 到 md 同目录（同名 .html）
+    html_path = os.path.splitext(report_path)[0] + ".html"
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    print(f"HTML 已生成: {html_path}")
+
     date_str = datetime.now().strftime("%Y-%m-%d")
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"{SUBJECT} - {date_str}"
+    msg["Subject"] = f"{SUBJECT}（{date_str}）"
     msg["From"] = SENDER
     msg["To"] = ", ".join(RECIPIENTS)
 
     msg.attach(MIMEText(md_content, "plain", "utf-8"))
-    msg.attach(MIMEText(markdown_to_html(md_content), "html", "utf-8"))
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
 
     try:
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)

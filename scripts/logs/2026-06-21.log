@@ -1,0 +1,62 @@
+[2026-06-21 08:10:01] 开始执行每日报告任务
+[2026-06-21 08:10:01] 工作目录: /Users/quartet/data-elements
+[2026-06-21 08:10:01] 报告文件: /Users/quartet/data-elements/reports/数据要素宏观洞察-2026-06-21.md
+[2026-06-21 08:10:02] claude 版本: 2.1.143 (Claude Code)
+[2026-06-21 08:10:02] 启动 claude 执行 data-news skill（超时 1800 秒）
+✅ 数据要素宏观新闻收集完成！
+
+📊 统计：
+- 处理信息源：18 个（全部成功，无失败）
+- 时间窗口内有效条目：6 条（过滤 1 条噪音"今日夏至"）
+- 报告日期：2026-06-21
+
+📁 生成文件：
+- 最终报告：`./reports/数据要素宏观洞察-2026-06-21.md`
+- 工作目录：`./reports/2026-06-21/`
+  - raw.json：18 个（5 个有内容、13 个时间窗口内无更新）
+  - 归类.json：5 个（仅有内容的源）
+  - 总结.md：5 个
+
+📈 各领域分布：宏观政策 3 条 / 关键技术 2 条 / 市场动态 1 条
+
+⏱️ 增量时间戳已更新至：`2026-06-21T00:10:10Z`
+
+📌 核心亮点：
+- **宏观政策**：国家数据局《关于推进行业高质量数据集建设行动的实施方案》专家解读（我国首个系统性部署行业高质量数据集的顶层行动纲领）；中国信通院主导 ITU-T SG17 安全研究组全会，我国提交 73 篇文稿占全会 33%
+- **关键技术**：国家数据局第 9 期"数据大讲堂"聚焦行业高质量数据集与垂域模型应用
+- **市场动态**：上海数据交易所就"数据资产代币化""RDA 投资"等涉嫌违法违规活动发布严正声明
+
+⚠️ 备注：13 个信息源在 24 小时窗口内无新发布（多为周末效应），未启动归类；邮件发送已按你的要求跳过，由外部脚本处理。
+[2026-06-21 08:20:55] claude 执行结束，退出码: 0，耗时: 653 秒
+[2026-06-21 08:20:55] 检查生成的文件: AI4Data-raw.json
+BAT大数据架构-raw.json
+BAT大数据架构-归类.json
+BAT大数据架构-总结.md
+CAICT可信数据空间-raw.json
+CAICT数字政府-raw.json
+中国信通院CAICT-raw.json
+中国信通院CAICT-归类.json
+中国信通院CAICT-总结.md
+全国数标委-raw.json
+北京数据-raw.json
+国家数据发展研究院-raw.json
+国家数据局-raw.json
+国家数据局-归类.json
+国家数据局-总结.md
+广东省数据要素产业协会-raw.json
+数据猿-raw.json
+数据要素产业洞察-raw.json
+数据要素市场-raw.json
+数据要素智库-raw.json
+[2026-06-21 08:20:55] 报告生成成功: /Users/quartet/data-elements/reports/数据要素宏观洞察-2026-06-21.md (    8131 字节)，开始发送邮件
+Traceback (most recent call last):
+  File "/Users/quartet/data-elements/scripts/send_report_email.py", line 98, in <module>
+    send_email(sys.argv[1])
+    ~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/quartet/data-elements/scripts/send_report_email.py", line 62, in send_email
+    html_content = markdown_to_html(md_content)
+  File "/Users/quartet/data-elements/scripts/send_report_email.py", line 25, in markdown_to_html
+    import markdown
+ModuleNotFoundError: No module named 'markdown'
+[2026-06-21 08:20:56] 错误：邮件发送失败，退出码 1
+[2026-06-21 08:20:56] 任务结束

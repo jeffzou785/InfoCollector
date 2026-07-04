@@ -42,7 +42,7 @@ if [ -f "$REPORT_FILE" ]; then
   log "报告生成成功: $REPORT_FILE (${REPORT_SIZE} 字节)，开始发送邮件"
 
   /opt/homebrew/opt/coreutils/libexec/gnubin/timeout --foreground --kill-after 5 120 \
-    python3 "${PROJECT_ROOT}/scripts/send_report_email.py" "$REPORT_FILE" \
+    "${PROJECT_ROOT}/.venv/bin/python" "${PROJECT_ROOT}/scripts/send_report_email.py" "$REPORT_FILE" \
     >> "$LOG_FILE" 2>&1
   EMAIL_EXIT=$?
 

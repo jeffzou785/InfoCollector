@@ -165,6 +165,31 @@ description: 数据要素与高质量数据集宏观新闻搜集助手 - 自动�
 - 等待 report-synthesizer 返回结果
 - 记录最终报告文件路径
 
+### 步骤 4.4：校验 MD 报告文件（必做，防 Agent 偶发跳步）
+
+**为什么有这一步**：`report-synthesizer` 偶发地会在没调用 Write 工具的情况下返回"完成"总结，甚至错把 HTML 当成最终产物汇报。**不能信任 Agent 的自述**，必须主动校验文件落地。
+
+**操作 4.4.1**：使用 Bash 工具检查 MD 报告文件是否落盘且非空：
+
+```bash
+REPORT_FILE="/Users/quartet/data-elements/reports/数据要素宏观洞察-{YYYY-MM-DD}.md"
+if [ -s "$REPORT_FILE" ]; then
+  echo "OK: $(wc -c < "$REPORT_FILE") 字节"
+else
+  echo "MISSING"
+fi
+```
+
+**操作 4.4.2**：根据校验结果决定下一步：
+
+- 输出 `OK`：进入阶段五。
+- 输出 `MISSING`（文件不存在或为空）：**立即完整重跑一次**步骤 4.2，并在 prompt 末尾追加一行提示：
+  > 上一次执行未通过 Write 保存 MD 文件，本次必须确保调用 Write 工具将报告保存到 `/Users/quartet/data-elements/reports/数据要素宏观洞察-{YYYY-MM-DD}.md`。
+
+  等待返回后再次执行 4.4.1 校验。
+  - 二次校验 `OK`：进入阶段五，并在最终输出中标注"报告合成经一次重试"。
+  - 二次校验仍 `MISSING`：跳至阶段五，最终输出中**显式声明**"报告合成失败：MD 文件未生成"，以便外部脚本捕获重试失败。
+
 ---
 
 ## 阶段五：收尾
